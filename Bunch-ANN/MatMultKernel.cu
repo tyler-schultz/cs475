@@ -1,7 +1,7 @@
 #include "MatMultKernel.h"
 
 // Define a gpu kernel to perform matrix multiplication
-// of A x B = C.
+// of B x C = A.
 __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
 
   // matrix blocks
