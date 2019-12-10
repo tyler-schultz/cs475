@@ -16,6 +16,7 @@
 #include "timer.h"
 #include "util.h"
 #include "bunch_ann.h"
+#include "MatMultKernel.h"
 
 int main(int argc, char** argv) 
 {
@@ -125,6 +126,9 @@ int main(int argc, char** argv)
   initializeI(inputs,cmdLineArgs.sample_total,cmdLineArgs.N);
   initializeO(outputs,cmdLineArgs.sample_total,cmdLineArgs.P);
 
+  // Invoke kernel
+  MatMulKernel<<<dimGrid, dimBlock>>>(device_A, device_B, device_C);
+  
 /*---------------------------------------------------------------------------------------------------------------*/
 /*------------------------------------------------Training-------------------------------------------------------*/
 /*---------------------------------------------------------------------------------------------------------------*/
