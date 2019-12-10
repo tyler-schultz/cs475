@@ -1,18 +1,3 @@
-///
-/// matmultKernel00.cu
-/// For CSU CS575 Spring 2011
-/// Instructor: Wim Bohm
-/// Based on code from the CUDA Programming Guide
-/// Modified by Wim Bohm and David Newman
-/// Created: 2011-01-27
-/// Last Modified: 2011-02-23 DVN
-///
-/// Multiplies two matrices using CUDA: A x B = C
-///
-/// Copy this file and modify the MatMultKernel device function for
-/// each of your experiments. 
-///
-
 #include "matmultKernel.h"
 
 // Define a gpu kernel to perform matrix multiplication
