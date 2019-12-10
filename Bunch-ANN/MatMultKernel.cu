@@ -14,7 +14,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
 
   // Each THREAD BLOCK computes one sub matrix Csub of C
   // EACH THREAD creates its own matrix descriptor Csub
-  Csub = &C.elements[C.stride * FOOTPRINT_SIZE * block_row + FOOTPRINT_SIZE * block_col];
+  Asub = &A.elements[A.stride * FOOTPRINT_SIZE * block_row + FOOTPRINT_SIZE * block_col];
 
   // Each thread computes one element of Csub in its copy of CValue
   float Avalue1 = 0;
@@ -65,12 +65,12 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C){
        Avalue3 += shared_B[thread_row][e] * shared_C[e][thread_col+BLOCK_SIZE];
        Avalue4 += shared_B[thread_row+BLOCK_SIZE][e] * shared_C[e][thread_col+BLOCK_SIZE];
     }
-    // Synchronize to ensure all Cvalues have been incremented
-    // before reading in the next shared_A AND shared_B BLOCKS
+    // Synchronize to ensure all Avalues have been incremented
+    // before reading in the next shared_B AND shared_C BLOCKS
     __syncthreads();
   }
 
-  // Write Csub to GLOBAL memory.
+  // Write Asub to GLOBAL memory.
   // Each thread writes its own cell value.
   Asub[thread_row * A.stride + thread_col] = Avalue2;
   Asub[(thread_row+BLOCK_SIZE) * A.stride +thread_col] = Avalue1;
