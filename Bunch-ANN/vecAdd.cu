@@ -11,16 +11,19 @@
 /// without using coalesced memory access.
 /// 
 
-__global__ void AddVectors(const float* A, const float* B, float* C, int N)
+__global__ void AddVectors(double** X, double** Y, long A, long B, long val)
 {
-    int blockStartIndex  = blockIdx.x * blockDim.x*N;
+    int blockStartIndex  = blockIdx.x * blockDim.x * val;
     int threadStartIndex = blockStartIndex + threadIdx.x;
     int threadEndIndex   = blockStartIndex;
     int i;
 
     for( i=threadStartIndex; i<(blockIdx.x+1)*blockDim.x*N; i+=blockDim.x){
-                C[i] = A[i] + B[i];
+            //need to figure out how to increment this
+            X[i][j+val] = foo(Y[i][j],val);    
+            
+            //what was originally here
+            //C[i] = A[i] + B[i];
     }
 
 }
-~   
