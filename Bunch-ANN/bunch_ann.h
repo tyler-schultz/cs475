@@ -1,4 +1,3 @@
-
 #define Z(i,j) Z[i][j]
 #define Y(i,j) Y[i][j]
 #define I(i,j) I[((i)*(a))+(j)]

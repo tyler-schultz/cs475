@@ -16,6 +16,7 @@
 #include "timer.h"
 #include "util.h"
 #include "bunch_ann.h"
+#include "MatMultKernel.h"
 
 void allocate(double **x, double **d_x, long size) {
 	*x = (double*)malloc(size);
