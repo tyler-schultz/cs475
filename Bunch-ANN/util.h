@@ -68,7 +68,7 @@ int parseCmdLineArgs(Params *cmdLineArgs, int argc, char* argv[]){
   // process incoming
   char c;
   
-while ((c = getopt (argc, argv, "N:M:P:S:I:B:T:L:VHn:m:p:s:i:b:t:l:hv")) != -1){
+while ((c = getopt(argc, argv, "N:M:P:S:I:B:T:L:VHn:m:p:s:i:b:t:l:hv")) != -1){
     c=toupper(c);
     switch( c ) {
 

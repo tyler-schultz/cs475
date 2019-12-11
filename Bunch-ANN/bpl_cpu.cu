@@ -138,9 +138,9 @@ int main(int argc, char** argv)
 		{
 		X[i][0]=H[i][0]=1;//bias setting
 		//required input/output are copied from inputs/outputs to X and Y
-	 	memcpy (&X[i][1], inputs[(s*b)+i], cmdLineArgs.N*sizeof(double)); 
+	 	memcpy (&X[i][1], inputs[(s*b)+i], cmdLineArgs.N*sizeof(double));
 		}
-		Y = &outputs[s*b]; 
+		Y = &outputs[s*b];
 
 		/*Forward Phase*/
 		mm(Zh,X,Wxh,b,cmdLineArgs.N+1,cmdLineArgs.M); //Zh=X*Wxh

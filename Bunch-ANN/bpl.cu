@@ -17,220 +17,235 @@
 #include "util.h"
 #include "bunch_ann.h"
 
+void allocate(double **x, double **d_x, long size) {
+	*x = (double*)malloc(size);
+	cudaMalloc(d_x, size);
+	cudaMemcpy(*d_x, *x, size, cudaMemcpyHostToDevice);
+}
+
 int main(int argc, char** argv) 
 {
 
-/*---------------------------------------------------------------------------------------------------------------*/
-/*-----------------------------------------Command line parsing--------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------*/
+/*-----------------------------------Command line parsing--------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------*/
 
-  Params cmdLineArgs;
-  parseCmdLineArgs(&cmdLineArgs,argc,argv);
+	Params cmdLineArgs;
+	parseCmdLineArgs(&cmdLineArgs,argc,argv);
+	long 	N = cmdLineArgs.N,
+			M = cmdLineArgs.M,
+			P = cmdLineArgs.P,
+			b = cmdLineArgs.sample_per_iter,
+			sampleTotal = cmdLineArgs.sample_total,
+			iter = cmdLineArgs.iter,
+			numBlocks = cmdLineArgs.numblocks,
+			numThreads = cmdLineArgs.numthreads;
 
-/*---------------------------------------------------------------------------------------------------------------*/
-/*-------------------------------------------Variable Declaration------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------*/
+/*-----------------------------------Variable Declaration--------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------*/
+	
+	// Array description and its size in the comments next to its declaration
+	
+	// 2D arrays:
+	double *inputs, *d_inputs; // Given inputs = total number of samples(S)*number of inputs per sample(N) 
+	double *outputs, *d_outputs; // Expected outputs = total number of samples(S)*number of outputs per sample(P) 
+	
+	double *X, *d_X; // Input for a given iteration = bunch size(I)*number of inputs per sample(N+1(bias))
+	double *Y, *d_Y; // Output for a given iteration = bunch size(I)*number of outputs per sample(P)
 
-  /*Array description and its size in the comments next to its declation*/
-
-  double **inputs;//Given inputs = total number of samples(S)*number of inputs per sample(N) 
-  double **outputs;//Expected outputs = total number of samples(S)*number of outputs per sample(P) 
-
-  double **X;//Input for a given iteration = bunch size(I)*number of inputs per sample(N+1(bias))
-  double **Y;//Output for a given iteration = bunch size(I)*number of outputs per sample(P)
-
-  double **Wxh; //Weights in between input and hidden layer = (N+1)*M
-  double **Why; //Weights in between input and hidden layer = (M+1)*P
-  double **dWxh; //Error Weights in between input and hidden layer = (N+1)*M
-  double **dWhy; //Error Weights in between input and hidden layer = (M+1)*P
-
-  double **Zh; //Weighted sum for hidden layer=I*M
-  double **H;  // Activation values = I*(M+1)
-  double **Zy; //Weighted sum for output layer=I*P 
-  double **E;  //Calculated Errors = I*P
-  double **P1; //Oredicted output = I*P
-  double **P;  // (exp(Zy)) = I*P
-  double *sum; //(summation of the P[i]s) = I
-  
-  double learningrate = 0.0001; /*learning rate */
-  long b = cmdLineArgs.sample_per_iter;
-  
-  long k2 = cmdLineArgs.sample_total/b ; /*number of full bunches */
-  long k3 = cmdLineArgs.sample_total-(k2*b); /* size of the partial bunch */
-
-/*---------------------------------------------------------------------------------------------------------------*/
-/*-------------------------------------------Memory allocations--------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------*/
- 
-  inputs  = (double**)malloc(cmdLineArgs.sample_total * sizeof(double*));
-  outputs = (double**)malloc(cmdLineArgs.sample_total * sizeof(double*));
-  
-  sum	  = (double*)malloc((b)*sizeof(double));
-
-  for(long i = 0; i < cmdLineArgs.sample_total; ++i )
-  {
-	inputs[i] =(double*)malloc(cmdLineArgs.N * sizeof(double));
-	outputs[i]=(double*)malloc(cmdLineArgs.P * sizeof(double));
-  }
-
-  Wxh     = (double**)malloc((cmdLineArgs.N+1) * sizeof(double*));
-  Why	  = (double**)malloc((cmdLineArgs.M+1) * sizeof(double*));
-  dWxh    = (double**)malloc((cmdLineArgs.N+1) * sizeof(double*));
-  dWhy	  = (double**)malloc((cmdLineArgs.M+1) * sizeof(double*));
-
-  for(long i = 0; i < cmdLineArgs.N+1; ++i )
-  {
-	Wxh[i] =(double*)malloc(cmdLineArgs.M * sizeof(double));	
-	dWxh[i]=(double*)malloc(cmdLineArgs.M * sizeof(double));
-  }
-
-  for(long i = 0; i < cmdLineArgs.M+1; ++i )
-  {
-	Why[i] =(double*)malloc(cmdLineArgs.P * sizeof(double));
-	dWhy[i]=(double*)malloc(cmdLineArgs.P * sizeof(double));
-  }
-
-  X	  = (double**)malloc(b*sizeof(double*));
-  E	  = (double**)malloc(b*sizeof(double*));
-  P	  = (double**)malloc(b*sizeof(double*));
-  P1  = (double**)malloc(b*sizeof(double*));
-  H	  = (double**)malloc(b*sizeof(double*));
-  Zh  = (double**)malloc(b*sizeof(double*));
-  Zy  = (double**)malloc(b*sizeof(double*));
-
-  for(long i = 0; i < b; ++i )
-  {
-  X[i]	  = (double*)malloc((cmdLineArgs.N+1)*sizeof(double));
-  E[i]	  = (double*)malloc(cmdLineArgs.P*sizeof(double));
-  P[i]	  = (double*)malloc(cmdLineArgs.P*sizeof(double));
-  P1[i]    = (double*)malloc(cmdLineArgs.P*sizeof(double));
-  H[i]	  = (double*)malloc((cmdLineArgs.M+1)*sizeof(double));
-  Zh[i]	  = (double*)malloc(cmdLineArgs.M*sizeof(double));
-  Zy[i]	  = (double*)malloc(cmdLineArgs.P*sizeof(double));
-  }
-
-  if( inputs == NULL || outputs == NULL || X == NULL|| H == NULL || dWxh == NULL || dWhy == NULL 
-      || Zh == NULL || Zy == NULL || Wxh == NULL || Why == NULL|| E == NULL || P == NULL
-	  || P1 == NULL || sum == NULL)
-  {
-    printf( "Could not allocate memory\n" );
-    exit(0);
-  }
-/*---------------------------------------------------------------------------------------------------------------*/
-/*----------------------------------------------Initializations--------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------*/
-
-  initializeW(Wxh,(cmdLineArgs.N+1),cmdLineArgs.M);
-  initializeW(Why,(cmdLineArgs.M+1),cmdLineArgs.P);
-  initializeI(inputs,cmdLineArgs.sample_total,cmdLineArgs.N);
-  initializeO(outputs,cmdLineArgs.sample_total,cmdLineArgs.P);
-
-/*---------------------------------------------------------------------------------------------------------------*/
-/*------------------------------------------------Training-------------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------*/
-  initialize_timer();
-  start_timer();
-  for (long t=0; t<cmdLineArgs.iter; t++) //Time loop
-  {
-	 for (long s=0; s<k2; s++) //Bunch loop
-	  { 	
-		for(long i=0;i<b;i++)
-		{
-		X[i][0]=H[i][0]=1;//bias setting
-		//required input/output are copied from inputs/outputs to X and Y
-	 	memcpy (&X[i][1], inputs[(s*b)+i], cmdLineArgs.N*sizeof(double)); 
-		}
-		Y = &outputs[s*b]; 
-
-		/*Forward Phase*/
-		mm(Zh,X,Wxh,b,cmdLineArgs.N+1,cmdLineArgs.M); //Zh=X*Wxh
-		func(H,Zh,b,cmdLineArgs.M,1); //H=f1(Zh)
-		mm(Zy,H,Why,b,cmdLineArgs.M+1,cmdLineArgs.P); //Zy=H*Why	
-		func(P,Zy,b,cmdLineArgs.P,0); //P=fn(Zy)	
-		reduction(P,sum,b,cmdLineArgs.P);  //summation of probabilities for each training sample
-		prob(P,P1,sum,b,cmdLineArgs.P); //P1=fn(P,sum)	
-		error(E,P1,Y,b,cmdLineArgs.P);	//E=P1-Y
-
-		/*Backprpagation Phase*/ 		
-		mtm(dWhy,H,E,cmdLineArgs.M+1,b,cmdLineArgs.P); //dWhy=H'*E ('->transpose)		
-		delta(Why,dWhy,cmdLineArgs.M+1,cmdLineArgs.P,learningrate); //Why=fn(dwhy)
-		mmt(H,Why,E,b,cmdLineArgs.M+1,cmdLineArgs.P); //H=Why*E'		
-		gradient_func(Zh,H,b,cmdLineArgs.M); //Zh=f1"(H) ("->gradient of f1)		
-		mtm(dWxh,X,Zh,cmdLineArgs.N+1,b,cmdLineArgs.M);	//dWxh=X'Zh
-		delta(Wxh,dWxh,cmdLineArgs.N+1,cmdLineArgs.M,learningrate);//Wxh=fn(dWxh)
+	double *Wxh, *d_Wxh; // Weights in between input and hidden layer = (N+1)*M
+	double *Why, *d_Why; // Weights in between input and hidden layer = (M+1)*P
+	double *dWxh, *d_dWxh; // Error Weights in between input and hidden layer = (N+1)*M
+	double *dWhy, *d_dWhy; // Error Weights in between input and hidden layer = (M+1)*P
+	
+	double *Zh, *d_Zh; // Weighted sum for hidden layer=I*M
+	double *H, *d_H;  // Activation values = I*(M+1)
+	double *Zy, *d_Zy; // Weighted sum for output layer=I*P 
+	double *E, *d_E;  // Calculated Errors = I*P
+	double *P1, *d_P1; // Oredicted output = I*P
+	double *P0, *d_P0;  // (exp(Zy)) = I*P
+	// 1D arrays:
+	double *sum, *d_sum; // (summation of the P[i]s) = I
+	
+	double learningrate = 0.0001; // Learning rate
+	
+	long k2 = sampleTotal/b; // Number of full bunches
+	long k3 = sampleTotal-(k2*b); // Size of the partial bunch
+	
+/*---------------------------------------------------------------------------------------------------*/
+/*----------------------------------Memory allocations-----------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------*/
+	
+	allocate(&inputs, &d_inputs, sizeof(double) * (sampleTotal * N));
+	allocate(&outputs, &d_outputs, sizeof(double) * (sampleTotal * P));
+	
+	allocate(&sum, &d_sum, sizeof(double) * b);
+	
+	allocate(&Wxh, &d_Wxh, sizeof(double) * (N+1) * M);
+	allocate(&Why, &d_Why, sizeof(double) * (M+1) * P);
+	allocate(&dWxh, &d_dWxh, sizeof(double) * (N+1) * M);
+	allocate(&dWhy, &d_dWhy, sizeof(double) * (N+1) * P);
+	
+	allocate(&X, &d_X, sizeof(double) * b * (N+1));
+	allocate(&E, &d_E, sizeof(double) * b * P);
+	allocate(&P0, &d_P0, sizeof(double) * b * P);
+	allocate(&P1, &d_P1, sizeof(double) * b * P);
+	allocate(&H, &d_H, sizeof(double) * b * (M+1));
+	allocate(&Zh, &d_Zh, sizeof(double) * b * M);
+	allocate(&Zy, &d_Zy, sizeof(double) * b * P);
+	
+	if (inputs == NULL || outputs == NULL || X == NULL|| H == NULL || dWxh == NULL || dWhy == NULL 
+		|| Zh == NULL || Zy == NULL || Wxh == NULL || Why == NULL|| E == NULL || P0 == NULL
+		|| P1 == NULL || sum == NULL) {
+		printf("Could not allocate memory\n");
+		exit(1);
 	}
-	if(k3)
-	{
-		for(long i=0;i<k3;i++)
-		{
-		X[i][0]=H[i][0]=1;
-	 	memcpy (&X[i][1], inputs[(k2*b)+i], cmdLineArgs.N*sizeof(double));
-		}
-		Y = &outputs[k2*b];
-
-		/*Forward Phase*/
-		mm(Zh,X,Wxh,k3,cmdLineArgs.N+1,cmdLineArgs.M);
-		func(H,Zh,k3,cmdLineArgs.M,1);
-		mm(Zy,H,Why,k3,cmdLineArgs.M+1,cmdLineArgs.P);		
-		func(P,Zy,k3,cmdLineArgs.P,0); 
-		reduction(P,sum,k3,cmdLineArgs.P);  
-		prob(P,P1,sum,k3,cmdLineArgs.P);  
-		error(E,P1,Y,k3,cmdLineArgs.P);
+	
+/*---------------------------------------------------------------------------------------------------*/
+/*--------------------------------------Initializations----------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------*/
+	
+	initializeW(Wxh, N+1, M);
+	cudaMemcpy(d_Wxh, Wxh, sizeof(double) * (N+1) * M, cudaMemcpyHostToDevice);
+	
+	initializeW(Why, M+1, P);
+	cudaMemcpy(d_Why, Why, sizeof(double) * (M+1) * P, cudaMemcpyHostToDevice);
+	
+	initializeI(inputs, sampleTotal, N);
+	cudaMemcpy(d_inputs, inputs, sizeof(double) * (sampleTotal * N), cudaMemcpyHostToDevice);
+	
+	initializeO(outputs, sampleTotal, P);
+	cudaMemcpy(d_outputs, outputs, sizeof(double) * (sampleTotal * P), cudaMemcpyHostToDevice);
+	
+/*---------------------------------------------------------------------------------------------------*/
+/*-----------------------------------------Training--------------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------*/
+	
+	initialize_timer();
+	start_timer();
+		
+	for (long t = 0; t < iter; ++t) { // Time loop
+		for (long s = 0; s < k2; ++s) { // Bunch loop
+			for (long i = 0; i < b; ++i) {
+				X[i*b + 0] = H[i*b + 0] = 1; // Bias setting
+				// Required input/output are copied from inputs/outputs to X and Y
+				for (int q = 0; q < N; ++q) {
+					memcpy(&X[i*b + 1 + q], &inputs[(s*b)+i + q], sizeof(double));
+				}
+				//memcpy(&X[i*b + 1], inputs[(s*b)+i], sizeof(double) * N); // TODO: inputs[] might need to be changed.
+			}
+			cudaMemcpy(d_X, X, sizeof(double) * b * (N+1), cudaMemcpyHostToDevice);
+			cudaMemcpy(d_H, H, sizeof(double) * b * (M+1), cudaMemcpyHostToDevice);
 			
-		/*Backprpagation Phase*/ 		
-		mtm(dWhy,H,E,cmdLineArgs.M+1,k3,cmdLineArgs.P);
-		delta(Why,dWhy,cmdLineArgs.M+1,cmdLineArgs.P,learningrate);
-		mmt(H,Why,E,k3,cmdLineArgs.M+1,cmdLineArgs.P);		
-		gradient_func(Zh,H,k3,cmdLineArgs.M);		
-		mtm(dWxh,X,Zh,cmdLineArgs.N+1,k3,cmdLineArgs.M);
-		delta(Wxh,dWxh,cmdLineArgs.N+1,cmdLineArgs.M,learningrate);
+			// TODO: I really don't know how this line works, and we only use Y once down below in the error function but never allocate it.
+			Y = &outputs[s*b]; 
+			cudaMemcpy(d_Y, Y, sizeof(double) * (M+1), cudaMemcpyHostToDevice);
+						
+			// Forward Phase
+			mm(d_Zh, d_X, d_Wxh, b, N+1, M); // Zh = X*Wxh
+			//mm<<<1, threadBlocks, 3*N*N*sizeof(double)>>>(d_Zh, d_X, d_Wxh, N);
+			func(d_H, d_Zh, b, M, 1); // H = f1(Zh)
+			mm(d_Zy, d_H, d_Why, b, M+1, P); // Zy = H*Why
+			func(d_P0, d_Zy, b, P, 0); // P = fn(Zy)
+			reduction(d_P0, d_sum, b, P); // Summation of probabilities for each training sample
+			prob(d_P0, d_P1, d_sum, b, P); // P1 = fn(P,sum)
+			error(d_E, d_P1, d_Y, b, P); // E = P1-Y
 
-	}	
-   }
+			// Backpropagation Phase
+			mtm(d_dWhy, d_H, d_E, M+1, b, P); // dWhy = H'*E ('->transpose)
+			delta(d_Why, d_dWhy, M+1, P, learningrate); // Why = fn(dwhy)
+			mmt(d_H, d_Why, d_E, b, M+1, P); // H = Why*E'
+			gradient_func(d_Zh, d_H, b, M); // Zh = f1"(H) ("->gradient of f1)
+			mtm(d_dWxh, d_X, d_Zh, N+1, b, M); // dWxh = X'Zh
+			delta(d_Wxh, d_dWxh, N+1, M, learningrate); // Wxh = fn(dWxh)
+			
+			cudaMemcpy(inputs, d_inputs, sizeof(double) * (sampleTotal * N), cudaMemcpyDeviceToHost);
+		}
+		if (k3) {
+			for (long i = 0; i < k3; ++i) {
+				X[i*b + 0] = H[i*b + 0] = 1;
+				for (int q = 0; q < N; ++q) {
+					memcpy(&X[i*b + 1 + q], &inputs[(k2*b)+i + q], sizeof(double));
+				}
+				//memcpy(&X[i*b + 1], inputs[(k2*b)+i], sizeof(double) * N);
+			}
+			cudaMemcpy(d_X, X, sizeof(double) * b * (N+1), cudaMemcpyHostToDevice);
+			cudaMemcpy(d_H, H, sizeof(double) * b * (M+1), cudaMemcpyHostToDevice);
+			
+			Y = &outputs[k2*b];
+			cudaMemcpy(d_Y, Y, sizeof(double) * (M+1), cudaMemcpyHostToDevice);
 
-  stop_timer();
-  double time = elapsed_time();
-  printf( "Time: %lf\n",time);
-/*---------------------------------------------------------------------------------------------------------------*/
-/*----------------------------------------------Print outputs----------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------*/
-   if(cmdLineArgs.V)
-   {
-	/*Need the following 2 statements for Testing*/
-	displayMatrix ("input/hidden weights", Wxh, cmdLineArgs.N+1, cmdLineArgs.M);
-	displayMatrix ("hidden/output weights", Why, cmdLineArgs.M+1, cmdLineArgs.P);
-	/* Useful for analyzing the accuracy of prediction */
-	/*if(k3)
-	{	
-		displayVector ("last input", &X[k3-1][1], cmdLineArgs.N);
-		displayVector ("last output", Y[k3-1], cmdLineArgs.P);
-		displayVector ("predicted output",P1[k3-1], cmdLineArgs.P);
+			// Forward Phase
+			mm(d_Zh, d_X, d_Wxh, k3, N+1, M);
+			func(d_H, d_Zh, k3, M, 1);
+			mm(d_Zy, d_H, d_Why, k3, M+1, P);
+			func(d_P0, d_Zy, k3, P, 0); 
+			reduction(d_P0, d_sum, k3, P);  
+			prob(d_P0, d_P1, d_sum, k3, P);  
+			error(d_E, d_P1, d_Y, k3, P);
+				
+			// Backpropagation Phase
+			mtm(d_dWhy, d_H, d_E, M+1, k3, P);
+			delta(d_Why, d_dWhy, M+1, P, learningrate);
+			mmt(d_H, d_Why, d_E, k3, M+1, P);
+			gradient_func(d_Zh, d_H, k3, M);
+			mtm(d_dWxh, d_X, d_Zh, N+1, k3, M);
+			delta(d_Wxh, d_dWxh, N+1, M,learningrate);
+			
+			cudaMemcpy(inputs, d_inputs, sizeof(double) * (sampleTotal * N), cudaMemcpyDeviceToHost);
+		}
 	}
-	else
-	{
-		displayVector ("last input", &X[b-1][1], cmdLineArgs.N);
-		displayVector ("last output", Y[b-1], cmdLineArgs.P);
-		displayVector ("predicted output",P1[b-1], cmdLineArgs.P);
-	}*/
-   }
-/*---------------------------------------------------------------------------------------------------------------*/
-/*----------------------------------------------Free Memory------------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------*/
-free(inputs);
-free(outputs);
-free(X);
-free(Zh);
-free(Zy);
-free(H);
-free(E);
-free(P);
-free(P1);
-free(sum);
-free(Wxh);
-free(Why);
-free(dWxh);
-free(dWhy);
-/*-------------------------------------------------------END-----------------------------------------------------*/
-return 0;
+	
+	cudaMemcpy(Wxh, d_Wxh, sizeof(double) * (N+1) * M, cudaMemcpyDeviceToHost);
+	cudaMemcpy(Why, d_Why, sizeof(double) * (M+1) * P, cudaMemcpyDeviceToHost);
+	
+	stop_timer();
+	double time = elapsed_time();
+	printf("Time: %lf\n",time);
+	
+/*---------------------------------------------------------------------------------------------------*/
+/*---------------------------------------Print outputs-----------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------*/
+	
+	if (cmdLineArgs.V) {
+		/*Need the following 2 statements for Testing*/
+		//displayMatrix("input/hidden weights", Wxh, N+1, M);
+		//displayMatrix("hidden/output weights", Why, M+1, P);
+		/* Useful for analyzing the accuracy of prediction */
+		/*if (k3) {
+			displayVector("last input", &X[(k3-1)*b + 1], N);
+			displayVector("last output", Y[k3-1], P);
+			displayVector("predicted output", P1[k3-1], P);
+		}
+		else {
+			displayVector("last input", &X[(b-1)*b + 1], N);
+			displayVector("last output", Y[b-1], P);
+			displayVector("predicted output", P1[b-1], P);
+		}*/
+	}
+	
+/*---------------------------------------------------------------------------------------------------*/
+/*--------------------------------------Free Memory--------------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------*/
+	
+	free(inputs);
+	free(outputs);
+	free(X);
+	free(Zh);
+	free(Zy);
+	free(H);
+	free(E);
+	free(P0);
+	free(P1);
+	free(sum);
+	free(Wxh);
+	free(Why);
+	free(dWxh);
+	free(dWhy);
+	
+/*--------------------------------------------------END----------------------------------------------*/
+	
+	return 0;
 }
 
