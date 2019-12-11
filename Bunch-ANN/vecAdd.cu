@@ -1,30 +1,26 @@
 ///
-/// vecMaxKernel00.cu : code computes partiol answer per each thread. 
-/// By Waruna Ranasinghe 
-/// Created: 15 Aug 2017
-/// Last Modified: 
+/// vecAddKernel01.cu
+/// For CSU CS575 Spring 2011
+/// Instructor: Wim Bohm
+/// Based on code from the CUDA Programming Guide
+/// By David Newman
+/// Created: 2011-02-16
+/// Last Modified: 2011-02-16 DVN
+///
+/// This Kernel adds two Vectors A and B in C on GPU
+/// without using coalesced memory access.
+/// 
 
-/// The code computes partial answer for reduction over max per a thread. 
-/// Each thread computes max of a consective chunck of data of size C.
-/// The memory loads are not coalesced. 
+__global__ void AddVectors(const float* A, const float* B, float* C, int N)
+{
+    int blockStartIndex  = blockIdx.x * blockDim.x*N;
+    int threadStartIndex = blockStartIndex + threadIdx.x;
+    int threadEndIndex   = blockStartIndex;
+    int i;
 
+    for( i=threadStartIndex; i<(blockIdx.x+1)*blockDim.x*N; i+=blockDim.x){
+                C[i] = A[i] + B[i];
+    }
 
-/*
- * A - input vector of floats of size G*B*C
- * reductions - output of partial answers compted by each thread
- * C - chunck size - number of elements processed by ech thread
- */
-__global__ void reduce(const float* A, float* reductions, int C) {
-
-	int tid = threadIdx.x; 		//Thread index within a thread block
-	int blockid = blockIdx.x; //Block index within the grid
-	int B = blockDim.x; 			//numer of threads per block
-
-	//The index of the array corresponds to the start of a thread block
-	int start_of_the_block = blockid*B*C;	
-	
-	reductions[blockid*B + tid] = 0.0f;
-	for (int i=start_of_the_block + tid; i<(blockid+1)*B*C; i+=B) {
-		reductions[blockid*B+tid] = max(reductions[blockid*B+tid],A[i]);
-	}
 }
+~   
