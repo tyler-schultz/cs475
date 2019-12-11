@@ -13,8 +13,7 @@ void displayVector (const char *label, double *m, int rows) {
 	printf ("\n");
 }
 
-void displayMatrix (const char *label, double *m, int rows, int cols) 
-{
+void displayMatrix (const char *label, double *m, int rows, int cols) {
     printf ("\n%s:\n", label);
     for(int i = 0; i < rows; ++i ) {
         for(int j = 0; j < cols; ++j )

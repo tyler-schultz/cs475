@@ -143,7 +143,14 @@ int main(int argc, char** argv)
 			cudaMemcpy(d_Y, Y, sizeof(double) * (M+1), cudaMemcpyHostToDevice);
 						
 			// Forward Phase
+			cudaMemcpy(X, d_X, sizeof(double) * b * (N+1), cudaMemcpyDeviceToHost);
+			cudaMemcpy(Wxh, d_Wxh, sizeof(double) * (N+1) * M, cudaMemcpyDeviceToHost);
+			displayMatrix("X", X, b, N+1);
+			displayMatrix("Wxh", Wxh, N+1, M);
 			mm(d_Zh, d_X, d_Wxh, b, N+1, M); // Zh = X*Wxh
+			cudaMemcpy(Zh, d_Zh, sizeof(double) * b * M, cudaMemcpyDeviceToHost);
+			displayMatrix("Zh", Zh, b, M);
+			
 			//mm<<<1, threadBlocks, 3*N*N*sizeof(double)>>>(d_Zh, d_X, d_Wxh, N);
 			func(d_H, d_Zh, b, M, 1); // H = f1(Zh)
 			mm(d_Zy, d_H, d_Why, b, M+1, P); // Zy = H*Why
