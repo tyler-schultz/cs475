@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 	
 	initialize_timer();
 	start_timer();
-		
+	
 	for (long t = 0; t < iter; ++t) { // Time loop
 		for (long s = 0; s < k2; ++s) { // Bunch loop
 			for (long i = 0; i < b; ++i) {
@@ -133,12 +133,12 @@ int main(int argc, char** argv)
 				for (int q = 0; q < N; ++q) {
 					memcpy(&X[i*b + 1 + q], &inputs[(s*b)+i + q], sizeof(double));
 				}
-				//memcpy(&X[i*b + 1], inputs[(s*b)+i], sizeof(double) * N); // TODO: inputs[] might need to be changed.
+				//memcpy(&X[i*b + 1], inputs[(s*b)+i], sizeof(double) * N);
 			}
 			cudaMemcpy(d_X, X, sizeof(double) * b * (N+1), cudaMemcpyHostToDevice);
 			cudaMemcpy(d_H, H, sizeof(double) * b * (M+1), cudaMemcpyHostToDevice);
 			
-			// TODO: I really don't know how this line works, and we only use Y once down below in the error function but never allocate it.
+			// TODO: I really don't know how this line works, and we only use Y once down below in the error function and literally never allocate it in the first place.
 			Y = &outputs[s*b]; 
 			cudaMemcpy(d_Y, Y, sizeof(double) * (M+1), cudaMemcpyHostToDevice);
 						
@@ -210,8 +210,8 @@ int main(int argc, char** argv)
 	
 	if (cmdLineArgs.V) {
 		/*Need the following 2 statements for Testing*/
-		//displayMatrix("input/hidden weights", Wxh, N+1, M);
-		//displayMatrix("hidden/output weights", Why, M+1, P);
+		displayMatrix("input/hidden weights", Wxh, N+1, M);
+		displayMatrix("hidden/output weights", Why, M+1, P);
 		/* Useful for analyzing the accuracy of prediction */
 		/*if (k3) {
 			displayVector("last input", &X[(k3-1)*b + 1], N);

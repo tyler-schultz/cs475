@@ -32,5 +32,5 @@ bpl_GPU: bpl.cu timer.o #bplKernel.h bplKernel.o
 bpl_CPU: bpl_cpu.cu timer.o
 	${NVCC} $< -o $@ $(LIB) timer.o $(OPTIONS)
 
-test: test.cu
-	${NVCC} $< -o $@ $(LIB) $(OPTIONS)
+#test: test.cu
+#	${NVCC} $< -o $@ $(LIB) $(OPTIONS)

@@ -13,83 +13,79 @@ void initializeW(double* X, long a, long b) {
 }
 
 void initializeI(double* X, long a, long b) {
-/*Initializes the inputs*/
-long i,j;
-for (i=0; i<a;i++)
-	for (j=0; j<b;j++)
-  		X[i*a + j] = j%2;
-
+	/*Initializes the inputs*/
+	long i,j;
+	for (i=0; i<a;i++)
+		for (j=0; j<b;j++)
+			X[i*a + j] = j%2;
 }
 
 void initializeO(double* X, long a, long b) {
-/*Initializes the outputs*/
-long i,j;
-for (i=0; i<a;i++)
-	for (j=0; j<b;j++)
-  		X[i*a + j] = i%2;
-
+	/*Initializes the outputs*/
+	long i,j;
+	for (i=0; i<a;i++)
+		for (j=0; j<b;j++)
+			X[i*a + j] = i%2;
 }
 
 void mm(double* X, double* Y, double* Z, long A, long B, long C) {
-/*Performs Matrix-Matrix Mulitplication*/
-long i,j,k;
-for (i=0; i<A; i++) 
-	for (j=0; j<B; j++)
-		for(k=0; k<C; k++) 
-		{
-			if(j==0) X[i*A + k]=0;
-			X[i*A + k] += Y[i*A + j] * Z[j*B + k];
-		}
+	/*Performs Matrix-Matrix Mulitplication*/
+	long i,j,k;
+	for (i=0; i<A; i++) 
+		for (j=0; j<B; j++)
+			for(k=0; k<C; k++) 
+			{
+				if(j==0) X[i*A + k]=0;
+				X[i*A + k] += Y[i*A + j] * Z[j*B + k];
+			}
 }
 
 void mtm(double* X, double* Y, double* Z, long A, long B, long C) {
-/*Performs Transposed Matrix- Matrix Mulitplication*/
-long i,j,k;
-for (i=0; i<A; i++) 
-	for (j=0; j<B; j++)
-		for(k=0; k<C; k++)
-		{ 
-			if(j==0) X[i*A + k]=0;
-			X[i*A + k] += Y[j*B + i] * Z[j*B + k];
-		}
+	/*Performs Transposed Matrix- Matrix Mulitplication*/
+	long i,j,k;
+	for (i=0; i<A; i++) 
+		for (j=0; j<B; j++)
+			for(k=0; k<C; k++)
+			{ 
+				if(j==0) X[i*A + k]=0;
+				X[i*A + k] += Y[j*B + i] * Z[j*B + k];
+			}
 }
 
 void mmt(double* X, double* Y, double* Z, long A, long B, long C) {
-/*Performs Matrix-Transposed Matrix Mulitplication*/
-long i,j,k;
-for (i=0; i<A; i++) 
-	for (j=0; j<B; j++)
-	{
-		X[i*A + j]=0;
-		for(k=0; k<C; k++)
-		 	X[i*A + j] += Y[j*B + k] * Z[i*A + k];
-	}
+	/*Performs Matrix-Transposed Matrix Mulitplication*/
+	long i,j,k;
+	for (i=0; i<A; i++) 
+		for (j=0; j<B; j++)
+		{
+			X[i*A + j]=0;
+			for(k=0; k<C; k++)
+				X[i*A + j] += Y[j*B + k] * Z[i*A + k];
+		}
 }
 
 void func(double* X, double* Y, long A, long B, long val) {
-/*Performs a point-wise operation*/
-long i,j;
-for (i=0; i<A; i++) 
-	for (j=0; j<B; j++)
-		X[i*A + j+val] = foo(Y[i*A + j], val); 
+	/*Performs a point-wise operation*/
+	long i,j;
+	for (i=0; i<A; i++) 
+		for (j=0; j<B; j++)
+			X[i*A + j+val] = foo(Y[i*A + j], val); 
 }
 
 void gradient_func(double* X, double* Y, long A, long B) {
-/*Performs a point-wise operation*/
-long i,j;
-for (i=0; i<A; i++)
-	for (j=0; j<B; j++)  
-		X[i*A + j] = Y[i*A + j+1]*(1 - pow(tanh(X[i*A + j]), 2)); 
+	/*Performs a point-wise operation*/
+	long i,j;
+	for (i=0; i<A; i++)
+		for (j=0; j<B; j++)  
+			X[i*A + j] = Y[i*A + j+1]*(1 - pow(tanh(X[i*A + j]), 2)); 
 }
 
-
-
 void error(double* X, double* Y, double* Z,  long B, long C) {
-/*Calculates the Error*/
-long i,j;
-for (i=0; i<B; i++)
-	for (j=0; j<C; j++)
-		X[i*B + j] = Y[i*B + j]-Z[i*B + j]; 
+	/*Calculates the Error*/
+	long i,j;
+	for (i=0; i<B; i++)
+		for (j=0; j<C; j++)
+			X[i*B + j] = Y[i*B + j]-Z[i*B + j]; 
 }
 
 void reduction(double* Y, double* X, long A, long B) {
