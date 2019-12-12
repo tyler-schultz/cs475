@@ -14,9 +14,10 @@
 #include <math.h> 
 
 #include "timer.h"
-#include "util.h"
-#include "bunch_ann.h"
-#include "MatMultKernel.h"
+#include "util_gpu.h"
+#include "bunch_ann_gpu.h"
+
+using namespace std;
 
 void allocate(double **x, double **d_x, long size) {
 	*x = (double*)malloc(size);
@@ -24,8 +25,7 @@ void allocate(double **x, double **d_x, long size) {
 	cudaMemcpy(*d_x, *x, size, cudaMemcpyHostToDevice);
 }
 
-int main(int argc, char** argv) 
-{
+int main(int argc, char** argv) {
 
 /*---------------------------------------------------------------------------------------------------*/
 /*-----------------------------------Command line parsing--------------------------------------------*/
@@ -142,25 +142,22 @@ int main(int argc, char** argv)
 			// TODO: I really don't know how this line works, and we only use Y once down below in the error function and literally never allocate it in the first place.
 			Y = &outputs[s*b]; 
 			cudaMemcpy(d_Y, Y, sizeof(double) * (M+1), cudaMemcpyHostToDevice);
-						
+			
 			// Forward Phase
-			cudaMemcpy(X, d_X, sizeof(double) * b * (N+1), cudaMemcpyDeviceToHost);
-			cudaMemcpy(Wxh, d_Wxh, sizeof(double) * (N+1) * M, cudaMemcpyDeviceToHost);
-			displayMatrix("X", X, b, N+1);
-			displayMatrix("Wxh", Wxh, N+1, M);
 			mm(d_Zh, d_X, d_Wxh, b, N+1, M); // Zh = X*Wxh
+			
 			cudaMemcpy(Zh, d_Zh, sizeof(double) * b * M, cudaMemcpyDeviceToHost);
 			displayMatrix("Zh", Zh, b, M);
-			
-			//mm<<<1, threadBlocks, 3*N*N*sizeof(double)>>>(d_Zh, d_X, d_Wxh, N);
 			func(d_H, d_Zh, b, M, 1); // H = f1(Zh)
+			cudaMemcpy(H, d_H, sizeof(double) * b * (M+1), cudaMemcpyDeviceToHost);
+			displayMatrix("H", H, b, M+1);
+			
 			mm(d_Zy, d_H, d_Why, b, M+1, P); // Zy = H*Why
 			func(d_P0, d_Zy, b, P, 0); // P = fn(Zy)
 			reduction(d_P0, d_sum, b, P); // Summation of probabilities for each training sample
 			prob(d_P0, d_P1, d_sum, b, P); // P1 = fn(P,sum)
 			error(d_E, d_P1, d_Y, b, P); // E = P1-Y
-
-<<<<<<< HEAD
+			
 			// Backpropagation Phase
 			mtm(d_dWhy, d_H, d_E, M+1, b, P); // dWhy = H'*E ('->transpose)
 			delta(d_Why, d_dWhy, M+1, P, learningrate); // Why = fn(dwhy)
@@ -170,25 +167,6 @@ int main(int argc, char** argv)
 			delta(d_Wxh, d_dWxh, N+1, M, learningrate); // Wxh = fn(dWxh)
 			
 			cudaMemcpy(inputs, d_inputs, sizeof(double) * (sampleTotal * N), cudaMemcpyDeviceToHost);
-=======
-  // Invoke kernel
-  MatMulKernel<<<dimGrid, dimBlock>>>(device_A, device_B, device_C);
-  
-/*---------------------------------------------------------------------------------------------------------------*/
-/*------------------------------------------------Training-------------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------*/
-  initialize_timer();
-  start_timer();
-  for (long t=0; t<cmdLineArgs.iter; t++) //Time loop
-  {
-	 for (long s=0; s<k2; s++) //Bunch loop
-	  { 	
-		for(long i=0;i<b;i++)
-		{
-		X[i][0]=H[i][0]=1;//bias setting
-		//required input/output are copied from inputs/outputs to X and Y
-	 	memcpy (&X[i][1], inputs[(s*b)+i], cmdLineArgs.N*sizeof(double)); 
->>>>>>> fc42ead0b6a0b8f45c8523ebb21c16d2fb7bdfc2
 		}
 		if (k3) {
 			for (long i = 0; i < k3; ++i) {
@@ -257,20 +235,20 @@ int main(int argc, char** argv)
 /*--------------------------------------Free Memory--------------------------------------------------*/
 /*---------------------------------------------------------------------------------------------------*/
 	
-	free(inputs);
-	free(outputs);
-	free(X);
-	free(Zh);
-	free(Zy);
-	free(H);
-	free(E);
-	free(P0);
-	free(P1);
-	free(sum);
-	free(Wxh);
-	free(Why);
-	free(dWxh);
-	free(dWhy);
+	free(inputs); cudaFree(d_inputs);
+	free(outputs); cudaFree(d_outputs);
+	free(X); cudaFree(d_X);
+	free(Zh); cudaFree(d_Zh);
+	free(Zy); cudaFree(d_Zy);
+	free(H); cudaFree(d_H);
+	free(E); cudaFree(d_E);
+	free(P0); cudaFree(d_P0);
+	free(P1); cudaFree(d_P1);
+	free(sum); cudaFree(d_sum);
+	free(Wxh); cudaFree(d_Wxh);
+	free(Why); cudaFree(d_Why);
+	free(dWxh); cudaFree(d_dWxh);
+	free(dWhy); cudaFree(d_dWhy);
 	
 /*--------------------------------------------------END----------------------------------------------*/
 	

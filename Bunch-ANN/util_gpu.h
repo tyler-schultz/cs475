@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 void displayVector (const char *label, double *m, int rows) {
-	printf ("\n%s:\n", label);	
+	printf ("\n%s:\n", label);
 	for (int i=0; i<rows; i++) 
 		printf ("%10.5lf\t", m[i]);
 	printf ("\n");

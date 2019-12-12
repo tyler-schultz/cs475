@@ -14,8 +14,8 @@
 #include <math.h> 
 
 #include "timer.h"
-#include "util.h"
-#include "bunch_ann.h"
+#include "util_cpu.h"
+#include "bunch_ann_cpu.h"
 
 int main(int argc, char** argv) 
 {
@@ -138,13 +138,17 @@ int main(int argc, char** argv)
 		{
 		X[i][0]=H[i][0]=1;//bias setting
 		//required input/output are copied from inputs/outputs to X and Y
-	 	memcpy (&X[i][1], inputs[(s*b)+i], cmdLineArgs.N*sizeof(double));
+		memcpy (&X[i][1], inputs[(s*b)+i], cmdLineArgs.N*sizeof(double)); 
 		}
-		Y = &outputs[s*b];
+		Y = &outputs[s*b]; 
 
 		/*Forward Phase*/
 		mm(Zh,X,Wxh,b,cmdLineArgs.N+1,cmdLineArgs.M); //Zh=X*Wxh
+		
+		displayMatrix("Zh", Zh, b, cmdLineArgs.M);
 		func(H,Zh,b,cmdLineArgs.M,1); //H=f1(Zh)
+		displayMatrix("H", H, b, cmdLineArgs.M+1);
+        
 		mm(Zy,H,Why,b,cmdLineArgs.M+1,cmdLineArgs.P); //Zy=H*Why	
 		func(P,Zy,b,cmdLineArgs.P,0); //P=fn(Zy)	
 		reduction(P,sum,b,cmdLineArgs.P);  //summation of probabilities for each training sample
@@ -233,4 +237,3 @@ free(dWhy);
 /*-------------------------------------------------------END-----------------------------------------------------*/
 return 0;
 }
-
