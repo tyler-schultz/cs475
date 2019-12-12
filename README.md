@@ -34,7 +34,8 @@ all the back-propagation learning algorithms. It will be with respect to this
 particular CPU code.
 
 1.Contents
-  	Reference/
+  	
+	Reference/
 		ann-bunch.pdf  : A research paper that implements ANN training
 				for Speech Recognition using bunch BPL algorithm
 				on GPUs
@@ -44,6 +45,7 @@ particular CPU code.
 				hidden layer with 3 neurons . It uses hyperbolic
 				tan as the activation function and the softmax
 				function at the output layer.  		
+	
 	Bunch-ANN/
 		bpl_cpu.cu	:Includes the main function where the sequential 
 				training is implemented to run on the host (CPU)
