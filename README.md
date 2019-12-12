@@ -79,7 +79,7 @@ particular CPU code.
 		
 2. Usage
 	
-	{ Once you make the files in the respective folders, running the executable with -H option }
+	'{ Once you make the files in the respective folders, running the executable with -H option }'
 	gives the following:
 	./bpl_CPU -H
 	usage: ./bpl_CPU
@@ -98,7 +98,7 @@ particular CPU code.
 
 3. Example input/output
 
-	/A ANN with 4 neurons(M) of 1 hidden layer, 30(S) samples each with 1 input(N) and
+	A ANN with 4 neurons(M) of 1 hidden layer, 30(S) samples each with 1 input(N) and
 	5(P) outputs. The bunch-size is 5(I) and the number of time loop iterations is 10(L)
  
 	With verbose:
