@@ -1,10 +1,7 @@
-*---------------------------------------------------*
-*README file for PA6 CS475 Fall 2016				*	
-*Author: Swetha Varadarajan							*
-*Date: 11/19/2016									*
-*---------------------------------------------------*
+*README:* Files for the final project, CS475 Fall 2019
+*Author:* Joshua Burris, Tyler Schultz, Tristen Gulley-Davenport
+*Date:* 12/12/2019
 
-This is an Assignment created for the class of CS475 Fall 2016. 
 Objective is to 
 (i)   Implement bunch-mode backpropagation learning(BPL) on GPUS using CUDA. 
 (ii)  Study the performance(execution time) with varying bunch size.
@@ -47,16 +44,21 @@ particular CPU code.
 	Bunch-ANN/
 		bpl_cpu.cu	:Includes the main function where the sequential 
 				training is implemented to run on the host (CPU)
-		bpl.cu		:Same as bpl_cpu.cu. Modify to implement parallelized 
+		bpl_gpu.cu		:Same as bpl_cpu.cu. Modify to implement parallelized 
 						 function.
-		bunch_ann.h	:Includes routines that are used in the main program.
-						 Example: matrix multiplication, activation
-				 		 function and its gradient, softmax function etc.
+		bunch_ann_cpu.h	:Includes routines that are used in the main program.
+					Example: matrix multiplication, activation
+				 	function and its gradient, softmax function etc.
+		bunch_ann_gpu.h	:(Similar to bunch_ann_cpu.h) Includes routines used by the main
+					program that have integrated to use CUDA kernels.
 		Makefile	:Makes the files to run on GPUs using NVCC compiler
 		timer.cu	:Used to measure the running time of the program
 		timer.h		:Supporting file for timer.c
-		util.h		:Includes utility functions such as command line
-				 		parsing and printing of variables. 
+		util_cpu.h	:Includes utility functions such as command line
+				 	parsing and printing of variables.
+		util_gpu.h	:(Similar to util_cpu.h) Includes utility functions such as command line
+				 	parsing and printing of variables, but implemented for single
+					pointer doubles as 2D arrays.
 
 	Bunch-ANN-flatten/
 		bpl_flatten.cu  :Same as bpl_cpu.cu except that the 2d arrays are flattened into 1 dimension.
