@@ -1,8 +1,5 @@
 void initializeW(double* X, long a, long b);
 
-__global__
-void initializeWKernel(double* X, long a, long b);
-
 void initializeI(double* X, long a, long b);
 
 __global__
@@ -59,4 +56,4 @@ void probKernel(double* Y,double* Z, double* X, long A, long B);
 void delta(double* Z, double* Y, long A, long B, double C);
 
 __global__
-void delta(double* Z, double* Y, long A, long B, double C);
+void deltaKernel(double* Z, double* Y, long A, long B, double C);

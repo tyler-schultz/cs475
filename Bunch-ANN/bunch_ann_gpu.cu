@@ -12,22 +12,11 @@
 
 //Initializes the weights
 void initializeW(double* X, long a, long b) {
-    dim3 threadBlocks(ceil((double)a/2.0), ceil((double)b/2.0));
-	initializeWKernel<<<1, threadBlocks>>>(X, a, b);
-	cudaDeviceSynchronize();
-}
-
-__global__
-void initializeWKernel(double* X, long a, long b) {
-	double *X_temp = X;
-	
 	for (int i = 0; i < a; ++i) {
 		for (int j = 0; j < b; ++j) {
-			X_temp[i*a + j] = ((double)rand() / (double)RAND_MAX) * 0.2 - 0.1;
+			X[i*a + j] = ((double)rand() / (double)RAND_MAX) * 0.2 - 0.1;
 		}
 	}
-	
-	printf("Finished initializeW\n");
 }
 
 // Initializes the inputs

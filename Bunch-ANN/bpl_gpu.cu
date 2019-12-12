@@ -146,11 +146,11 @@ int main(int argc, char** argv) {
 			// Forward Phase
 			mm(d_Zh, d_X, d_Wxh, b, N+1, M); // Zh = X*Wxh
 			
-			cudaMemcpy(Zh, d_Zh, sizeof(double) * b * M, cudaMemcpyDeviceToHost);
-			displayMatrix("Zh", Zh, b, M);
+			//cudaMemcpy(Zh, d_Zh, sizeof(double) * b * M, cudaMemcpyDeviceToHost);
+			//displayMatrix("Zh", Zh, b, M);
 			func(d_H, d_Zh, b, M, 1); // H = f1(Zh)
-			cudaMemcpy(H, d_H, sizeof(double) * b * (M+1), cudaMemcpyDeviceToHost);
-			displayMatrix("H", H, b, M+1);
+			//cudaMemcpy(H, d_H, sizeof(double) * b * (M+1), cudaMemcpyDeviceToHost);
+			//displayMatrix("H", H, b, M+1);
 			
 			mm(d_Zy, d_H, d_Why, b, M+1, P); // Zy = H*Why
 			func(d_P0, d_Zy, b, P, 0); // P = fn(Zy)
@@ -235,7 +235,8 @@ int main(int argc, char** argv) {
 /*--------------------------------------Free Memory--------------------------------------------------*/
 /*---------------------------------------------------------------------------------------------------*/
 	
-	free(inputs); cudaFree(d_inputs);
+	free(inputs); cudaFree(&d_inputs);
+	//printf("AAA\n");
 	free(outputs); cudaFree(d_outputs);
 	free(X); cudaFree(d_X);
 	free(Zh); cudaFree(d_Zh);

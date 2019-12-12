@@ -145,9 +145,9 @@ int main(int argc, char** argv)
 		/*Forward Phase*/
 		mm(Zh,X,Wxh,b,cmdLineArgs.N+1,cmdLineArgs.M); //Zh=X*Wxh
 		
-		displayMatrix("Zh", Zh, b, cmdLineArgs.M);
+		//displayMatrix("Zh", Zh, b, cmdLineArgs.M);
 		func(H,Zh,b,cmdLineArgs.M,1); //H=f1(Zh)
-		displayMatrix("H", H, b, cmdLineArgs.M+1);
+		//displayMatrix("H", H, b, cmdLineArgs.M+1);
         
 		mm(Zy,H,Why,b,cmdLineArgs.M+1,cmdLineArgs.P); //Zy=H*Why	
 		func(P,Zy,b,cmdLineArgs.P,0); //P=fn(Zy)	
