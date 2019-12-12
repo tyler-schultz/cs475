@@ -1,6 +1,6 @@
 **README:** Files for the final project, CS475 Fall 2019
 
-**Author:** Joshua Burris, Tyler Schultz, Tristen Gulley-Davenport
+**Authors:** Joshua Burris, Tyler Schultz, Tristen Gulley-Davenport
 
 **Date:** 12/12/2019
 
