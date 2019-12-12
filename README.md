@@ -77,9 +77,9 @@ particular CPU code.
 		
 		
 		
-2. Usage
+### 2. Usage
 	
-	'{ Once you make the files in the respective folders, running the executable with -H option }'
+	Once you make the files in the respective folders, running the executable with -H option
 	gives the following:
 	./bpl_CPU -H
 	usage: ./bpl_CPU
