@@ -1,6 +1,6 @@
-*README:* Files for the final project, CS475 Fall 2019
-*Author:* Joshua Burris, Tyler Schultz, Tristen Gulley-Davenport
-*Date:* 12/12/2019
+**README:** Files for the final project, CS475 Fall 2019
+**Author:** Joshua Burris, Tyler Schultz, Tristen Gulley-Davenport
+**Date:** 12/12/2019
 
 Objective is to 
 (i)   Implement bunch-mode backpropagation learning(BPL) on GPUS using CUDA. 
