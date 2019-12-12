@@ -78,6 +78,7 @@ particular CPU code.
 		
 		
 2. Usage
+	
 	Once you make the files in the respective folders, running the executable with -H option 
 	gives the following:
 	./bpl_CPU -H
@@ -96,6 +97,7 @@ particular CPU code.
 		Number of training samples (S)
 
 3. Example input/output
+
 	A ANN with 4 neurons(M) of 1 hidden layer, 30(S) samples each with 1 input(N) and
 	5(P) outputs. The bunch-size is 5(I) and the number of time loop iterations is 10(L)
  
@@ -119,6 +121,7 @@ particular CPU code.
 	Time: 0.000364
 
 4. Code Description
+
 	The bpl_cpu.cu has the main function. It is divided into 7 portions:
 	(i)   Command line parsing : A structure is created to hold all the command 
 				     line arguments. 
