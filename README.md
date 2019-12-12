@@ -33,7 +33,7 @@ So, the speed-up that you report for GPUs may not be universally true for
 all the back-propagation learning algorithms. It will be with respect to this
 particular CPU code.
 
-1.Contents
+### 1.Contents
   	
 	Reference/
 		ann-bunch.pdf  : A research paper that implements ANN training
@@ -96,7 +96,7 @@ particular CPU code.
 	Note: Number of training samples per iteration (I) should be less than or equal to 
 		Number of training samples (S)
 
-3. Example input/output
+### 3. Example input/output
 
 	A ANN with 4 neurons(M) of 1 hidden layer, 30(S) samples each with 1 input(N) and
 	5(P) outputs. The bunch-size is 5(I) and the number of time loop iterations is 10(L)
@@ -120,7 +120,7 @@ particular CPU code.
 	$ ./bpl_CPU -N1 -M4 -S30 -I5 -L10 -P5 
 	Time: 0.000364
 
-4. Code Description
+### 4. Code Description
 
 	The bpl_cpu.cu has the main function. It is divided into 7 portions:
 	(i)   Command line parsing : A structure is created to hold all the command 
